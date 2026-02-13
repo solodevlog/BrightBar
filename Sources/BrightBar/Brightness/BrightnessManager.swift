@@ -51,7 +51,14 @@ final class BrightnessManager: ObservableObject {
     init() {
         self.displayManager = DisplayManager()
         setupObservers()
+        setupOSDCallback()
         syncFromDisplay()
+    }
+
+    private func setupOSDCallback() {
+        osd.onBrightnessChanged = { [weak self] level in
+            self?.setBrightness(level, showOSD: false)
+        }
     }
 
     // MARK: - Public API
