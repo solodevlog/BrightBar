@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import DonateKit
 
 /// Manages the NSStatusItem (menu bar icon) and its popover.
 final class StatusBarController {
@@ -8,9 +9,11 @@ final class StatusBarController {
     private let popover: NSPopover
     private var eventMonitor: Any?
     private let brightnessManager: BrightnessManager
+    private let donate: DonateKit
 
-    init(brightnessManager: BrightnessManager) {
+    init(brightnessManager: BrightnessManager, donate: DonateKit) {
         self.brightnessManager = brightnessManager
+        self.donate = donate
 
         // Create status bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -111,6 +114,9 @@ final class StatusBarController {
                 menu.addItem(item)
             }
         }
+
+        // Donate
+        donate.addMenuItem(to: menu)
 
         menu.addItem(NSMenuItem.separator())
 
