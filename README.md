@@ -1,108 +1,89 @@
-# BrightBar
+<p align="center">
+  <img src="https://github.com/solodevlog/BrightBar/releases/download/v1.0.0/AppIcon.png" width="128" alt="BrightBar Icon">
+</p>
 
-**Control your external monitor's brightness with native macOS hotkeys.**
+<h1 align="center">BrightBar</h1>
+<p align="center"><strong>Control external monitor brightness with native macOS hotkeys</strong></p>
 
-BrightBar is a lightweight menu bar utility for macOS that lets you adjust external monitor brightness using the built-in brightness keys (F1/F2) — just like a built-in display. It communicates directly with your monitor over DDC/CI, changing real hardware brightness (not software gamma).
+<p align="center">
+  <a href="https://github.com/solodevlog/BrightBar/releases/latest"><img src="https://img.shields.io/github/v/release/solodevlog/BrightBar?style=flat-square&label=Download&color=blue" alt="Download"></a>
+  <img src="https://img.shields.io/badge/platform-macOS%2013%2B-lightgrey?style=flat-square" alt="macOS 13+">
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License">
+  <a href="https://buymeacoffee.com/solodevlog"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-donate-yellow?style=flat-square&logo=buy-me-a-coffee&logoColor=white" alt="Buy Me a Coffee"></a>
+</p>
+
+---
+
+<p align="center">
+  <img src="assets/demo.gif" width="600" alt="BrightBar Demo">
+</p>
 
 ## Features
 
-- **Hardware brightness keys** — F1/F2 control your external monitor, with native macOS OSD
-- **Menu bar slider** — Click the sun icon for precise brightness control
-- **Multi-monitor support** — Select between multiple external monitors
-- **DDC/CI protocol** — Real hardware brightness via I2C, not software overlay
-- **Zero config** — Auto-detects DDC-capable displays on launch
-- **Native & lightweight** — Pure Swift, no Electron, minimal resource usage
-
-## Requirements
-
-- macOS 13.0 (Ventura) or later
-- Apple Silicon Mac (M1 / M2 / M3 / M4)
-- External monitor with DDC/CI support (most modern monitors)
-- DisplayPort, HDMI, USB-C, or Thunderbolt connection
+- **F1 / F2 hotkeys** — adjust brightness just like the built-in display
+- **Interactive OSD** — native-looking overlay with drag-to-set slider
+- **Menu bar control** — quick slider in the status bar popover
+- **Multi-monitor** — select between external displays with resolution and refresh rate info
+- **DDC/CI** — communicates directly with your monitor over I2C (Apple Silicon)
+- **Lightweight** — pure Swift, no Electron, no dependencies
 
 ## Install
 
-### Download
+### Download DMG
 
-1. Download the latest `BrightBar.dmg` from [Releases](../../releases)
-2. Open the DMG and drag **BrightBar** to your Applications folder
-3. **Before first launch**, remove the quarantine flag (the app is not notarized with Apple):
-   ```bash
-   xattr -cr /Applications/BrightBar.app
-   ```
-4. Launch BrightBar from Applications
+1. Go to [**Releases**](https://github.com/solodevlog/BrightBar/releases/latest) and download `BrightBar.dmg`
+2. Open the DMG and drag **BrightBar** to Applications
+3. Launch BrightBar and grant **Accessibility** permission when prompted
 
-> **Why is this needed?** macOS Gatekeeper blocks apps that aren't signed with a paid Apple Developer certificate. BrightBar is open-source and ad-hoc signed. The command above tells macOS you trust this app. Alternatively, right-click the app → **Open** → **Open** in the dialog.
+> **Note:** If macOS says the app can't be verified, run:
+> ```bash
+> xattr -cr /Applications/BrightBar.app
+> ```
 
-### Build from source
+<details>
+<summary><strong>Build from source</strong></summary>
 
 ```bash
 git clone https://github.com/solodevlog/BrightBar.git
 cd BrightBar
 bash Scripts/build.sh
+open .build/BrightBar.app
 ```
 
-The `.app` bundle and `.dmg` installer are created in `.build/`.
+Requires Xcode Command Line Tools and macOS 13+.
 
-## Setup
-
-On first launch, BrightBar will request **Accessibility** permission to intercept brightness keys:
-
-1. Open **System Settings > Privacy & Security > Accessibility**
-2. Toggle on **BrightBar**
-3. You may need to restart the app after granting permission
-
-> Without Accessibility permission, the menu bar slider still works — only hardware key interception requires it.
+</details>
 
 ## Usage
 
-| Action | Description |
-|--------|-------------|
-| **F1 / F2** | Decrease / increase brightness (6.25% steps, 16 segments) |
-| **Click menu bar icon** | Open brightness slider popover |
-| **Right-click menu bar icon** | Switch monitors, view display info, quit |
+| Action | How |
+|--------|-----|
+| Decrease brightness | Press **F1** |
+| Increase brightness | Press **F2** |
+| Drag to set brightness | Click and drag on the OSD bar |
+| Open slider | Click the menu bar icon |
+| Switch monitor | Right-click the menu bar icon |
 
-## How it works
+## Requirements
 
-BrightBar uses Apple Silicon's private `IOAVService` I2C interface to send DDC/CI VCP commands directly to your monitor:
+- macOS 13 (Ventura) or later
+- Apple Silicon (M1 / M2 / M3 / M4)
+- External monitor with DDC/CI support (most monitors via HDMI/DisplayPort/USB-C)
 
-1. **Discovery** — Enumerates `DCPAVServiceProxy` IOKit services and matches them to connected external displays via EDID
-2. **Key interception** — A `CGEventTap` intercepts system-defined media key events before macOS handles them
-3. **DDC/CI writes** — VCP Set (opcode 0x03) commands are sent to VCP code 0x10 (Luminance) with retry logic
-4. **OSD** — A custom `NSWindow` displays a system-style brightness indicator
+## How It Works
 
-## Troubleshooting
+BrightBar intercepts hardware brightness keys via `CGEventTap`, then sends DDC/CI commands over I2C using `IOAVService` private API. The VCP code `0x10` controls the backlight. A custom `NSPanel` renders the macOS-style OSD with interactive segments.
 
-**"Cannot verify that this app is free from malware"**
-This is expected — the app is ad-hoc signed, not notarized with Apple. Run:
-```bash
-xattr -cr /Applications/BrightBar.app
-```
-Or: right-click BrightBar.app → Open → Open.
+## Support
 
-**"No DDC display" in popover**
-Your monitor may not support DDC/CI, or the connection doesn't pass DDC signals. Try:
-- A different cable (DisplayPort/USB-C tend to work best)
-- Enabling "DDC/CI" in your monitor's OSD settings
-- Checking that the monitor is detected in System Settings > Displays
+If BrightBar saves you time, consider supporting development:
 
-**Brightness keys don't work**
-- Grant Accessibility permission in System Settings > Privacy & Security > Accessibility
-- Restart BrightBar after granting permission
-
-**App doesn't appear in menu bar**
-- BrightBar runs as a menu bar app (no Dock icon). Look for the sun icon in the menu bar.
-
-## Supported monitors
-
-Any monitor with DDC/CI support should work. Tested with:
-- ASUS XG27ACS
-- Most Dell UltraSharp displays
-- LG UltraFine series
-- BenQ PD / EW series
-
-> If your monitor works (or doesn't), please open an issue to help expand this list.
+<p>
+  <a href="https://github.com/sponsors/solodevlog"><img src="https://img.shields.io/badge/GitHub%20Sponsors-Support-ea4aaa?style=for-the-badge&logo=github-sponsors&logoColor=white" alt="GitHub Sponsors"></a>
+  <a href="https://buymeacoffee.com/solodevlog"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee"></a>
+  <a href="https://ko-fi.com/solodevlog"><img src="https://img.shields.io/badge/Ko--fi-Support-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
+</p>
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) — free and open source.
